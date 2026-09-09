@@ -5,7 +5,7 @@ import { useState } from "react";
 
 export function NewContenidoForm() {
   const router = useRouter();
-  const [tipo, setTipo] = useState<"curso" | "diplomado">("curso");
+  const [tipo, setTipo] = useState<"curso" | "diplomado" | "seminario">("curso");
   const [titulo, setTitulo] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,11 +33,12 @@ export function NewContenidoForm() {
         <label className="block text-xs font-medium text-neutral-600">Tipo</label>
         <select
           value={tipo}
-          onChange={(e) => setTipo(e.target.value as "curso" | "diplomado")}
+          onChange={(e) => setTipo(e.target.value as "curso" | "diplomado" | "seminario")}
           className="mt-1 rounded-md border border-neutral-300 px-2 py-1"
         >
           <option value="curso">Curso</option>
           <option value="diplomado">Diplomado</option>
+          <option value="seminario">Seminario</option>
         </select>
       </div>
       <div className="flex-1">

@@ -6,7 +6,7 @@ import { useState } from "react";
 export function NewStaffForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [tipo, setTipo] = useState<"cursos" | "diplomados">("cursos");
+  const [tipo, setTipo] = useState<"cursos" | "diplomados" | "seminarios">("cursos");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -50,11 +50,12 @@ export function NewStaffForm() {
         <label className="block text-xs font-medium text-neutral-600">Tipo</label>
         <select
           value={tipo}
-          onChange={(e) => setTipo(e.target.value as "cursos" | "diplomados")}
+          onChange={(e) => setTipo(e.target.value as "cursos" | "diplomados" | "seminarios")}
           className="mt-1 rounded-md border border-neutral-300 px-2 py-1"
         >
           <option value="cursos">Cursos</option>
           <option value="diplomados">Diplomados</option>
+          <option value="seminarios">Seminarios</option>
         </select>
       </div>
       <div>

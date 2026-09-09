@@ -4,7 +4,14 @@ import { LogoutButton } from "./LogoutButton";
 
 export function Topbar({ session }: { session: StaffSession }) {
   const { staff } = session;
-  const rolLabel = staff.rol === "admin" ? "Admin" : staff.tipo === "cursos" ? "Staff · Cursos" : "Staff · Diplomados";
+  const rolLabel =
+    staff.rol === "admin"
+      ? "Admin"
+      : staff.tipo === "cursos"
+        ? "Staff · Cursos"
+        : staff.tipo === "diplomados"
+          ? "Staff · Diplomados"
+          : "Staff · Seminarios";
 
   return (
     <header className="border-b border-neutral-200 bg-white">

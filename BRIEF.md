@@ -2,14 +2,14 @@
 
 ## Problema que resuelve
 
-En ADIPA, los cursos y diplomados en video se sirven desde una intranet sin control fuerte sobre quién los reproduce ni desde dónde. Hoy cualquier persona con el URL del recurso puede acceder desde cualquier dispositivo, y no existe una barrera efectiva contra el reenvío del enlace, el uso compartido de la sesión, ni el plagio del contenido pagado. El único control actual es el login estándar, que un alumno puede saltarse compartiendo credenciales.
+En ADIPA, los cursos, diplomados y seminarios en video se sirven desde una intranet sin control fuerte sobre quién los reproduce ni desde dónde. Hoy cualquier persona con el URL del recurso puede acceder desde cualquier dispositivo, y no existe una barrera efectiva contra el reenvío del enlace, el uso compartido de la sesión, ni el plagio del contenido pagado. El único control actual es el login estándar, que un alumno puede saltarse compartiendo credenciales.
 
 Este proyecto entrega una **capa de protección con doble autenticación** sobre cada enlace a un video de curso:
 
 1. **Correo asignado**: el alumno solo entra si su correo coincide con el que el staff asoció al link al momento de crearlo (verificado con OTP por email).
 2. **Device fingerprint**: cada link acepta un máximo de 2 dispositivos. El 3er dispositivo queda bloqueado, sin excepciones automáticas.
 
-El staff de ADIPA (roles "cursos" y "diplomados", aislados entre sí) gestiona los links: los crea, monitorea accesos, revoca, libera slots o extiende validez. Rodrigo (admin) hace lo mismo más gestionar cuentas de staff.
+El staff de ADIPA (roles "cursos", "diplomados" y "seminarios", aislados entre sí) gestiona los links: los crea, monitorea accesos, revoca, libera slots o extiende validez. Rodrigo (admin) hace lo mismo más gestionar cuentas de staff.
 
 ## Usuario principal y roles
 
@@ -17,9 +17,10 @@ El staff de ADIPA (roles "cursos" y "diplomados", aislados entre sí) gestiona l
 
 **Roles del sistema:**
 
-- **Admin (Rodrigo)** — Rol único. Crea, revoca y edita cuentas de staff, asigna tipo (cursos o diplomados). Puede hacer todo lo del staff pero sobre cualquier link, sin restricción de tipo.
-- **Staff Cursos** — Crea, edita, revoca y monitorea únicamente links de tipo "curso". No puede ver ni tocar links de tipo "diplomado".
-- **Staff Diplomados** — Espejo del anterior, sobre links de tipo "diplomado". No puede ver ni tocar los de curso.
+- **Admin (Rodrigo)** — Rol único. Crea, revoca y edita cuentas de staff, asigna tipo (cursos, diplomados o seminarios). Puede hacer todo lo del staff pero sobre cualquier link, sin restricción de tipo.
+- **Staff Cursos** — Crea, edita, revoca y monitorea únicamente links de tipo "curso". No puede ver ni tocar links de tipo "diplomado" o "seminario".
+- **Staff Diplomados** — Espejo del anterior, sobre links de tipo "diplomado". No puede ver ni tocar los de curso o seminario.
+- **Staff Seminarios** — Espejo de los anteriores, sobre links de tipo "seminario". No puede ver ni tocar los de curso o diplomado.
 - **Alumno** — Actor secundario, sin cuenta persistente. Se autentica por link + email + OTP + fingerprint cada vez que abre un recurso protegido.
 
 ## Pantallas / piezas (en orden del journey)
@@ -28,14 +29,14 @@ El staff de ADIPA (roles "cursos" y "diplomados", aislados entre sí) gestiona l
 
 1. **P1. Login** — Formulario de email + password. Redirige a P2 según rol y tipo.
 2. **P2. Dashboard** — Stats agregadas (links activos, revocados, accesos del día, bloqueos del día) + lista paginada de links del staff con estado (activo / expirado / revocado).
-3. **P3. Crear link** — Formulario: seleccionar curso o diplomado del catálogo (gestionado en P7, filtrado por `activo == true` y por el tipo del staff), ingresar correo del alumno, opcional activar "tiempo de validez en días desde 1er acceso". Al confirmar, genera link único y lo copia al portapapeles.
+3. **P3. Crear link** — Formulario: seleccionar curso, diplomado o seminario del catálogo (gestionado en P7, filtrado por `activo == true` y por el tipo del staff), ingresar correo del alumno, opcional activar "tiempo de validez en días desde 1er acceso". Al confirmar, genera link único y lo copia al portapapeles.
 4. **P4. Detalle del link** — Muestra: correo asignado, curso, estado, devices vinculados (0/2, 1/2, 2/2), tabla de logs de acceso (email intentado, IP, fecha/hora, browser, país, resultado). Acciones: revocar link, revocar 1 device (libera slot), sumar 1 slot extra, extender validez.
 5. **P5. Logout** — Cierra sesión y vuelve a P1.
 
 ### Journey extra del Admin (Rodrigo)
 
-6. **P6. Gestionar staff** — Lista de cuentas staff con acciones: crear nuevo staff (email + tipo cursos/diplomados), revocar cuenta, cambiar tipo.
-7. **P7. Gestionar catálogo** — CRUD de cursos y diplomados (crear, editar, desactivar). Acceso: solo Admin. Staff Cursos/Diplomados únicamente selecciona del catálogo (solo lectura, filtrado por su tipo) al crear un link en P3.
+6. **P6. Gestionar staff** — Lista de cuentas staff con acciones: crear nuevo staff (email + tipo cursos/diplomados/seminarios), revocar cuenta, cambiar tipo.
+7. **P7. Gestionar catálogo** — CRUD de cursos, diplomados y seminarios (crear, editar, desactivar). Acceso: solo Admin. El staff únicamente selecciona del catálogo (solo lectura, filtrado por su tipo) al crear un link en P3.
 
 Admin accede a P6 y P7 desde el Dashboard (P2), no solo desde el login.
 
@@ -58,7 +59,7 @@ Admin accede a P6 y P7 desde el Dashboard (P2), no solo desde el login.
 
 ### P1. Login
 - **Entra**: `{ email, password }`
-- **Sale**: sesión JWT con `{ staffId, rol: "admin" | "staff", tipo: "cursos" | "diplomados" | null }`
+- **Sale**: sesión JWT con `{ staffId, rol: "admin" | "staff", tipo: "cursos" | "diplomados" | "seminarios" | null }`
 
 ### P2. Dashboard
 - **Entra**: `staffId` (del JWT)
@@ -84,7 +85,7 @@ Admin accede a P6 y P7 desde el Dashboard (P2), no solo desde el login.
 ### P7. Gestionar catálogo (admin)
 - **Entra**: `{ }` (lista todo) para ver; para mutar: `crearContenido({ tipo, titulo, descripcion })`, `editarContenido(id, { titulo?, descripcion? })`, `desactivarContenido(id)`
 - **Sale**: `{ contenidos: Contenido[] }`
-  - `Contenido = { id, tipo: "curso" | "diplomado", titulo, descripcion, activo }`
+  - `Contenido = { id, tipo: "curso" | "diplomado" | "seminario", titulo, descripcion, activo }`
 
 ### A1. Landing del link
 - **Entra**: `tokenPublico` (por URL path)
@@ -109,7 +110,7 @@ Admin accede a P6 y P7 desde el Dashboard (P2), no solo desde el login.
 
 ## Reglas de negocio (si... entonces...)
 
-1. Si `staff.tipo == "cursos"` → NO puede listar, ver, crear ni editar links de tipo "diplomados". Idem al revés.
+1. El tipo del staff (`cursos`, `diplomados` o `seminarios`) determina exclusivamente qué links puede listar, ver, crear o editar: solo los de su propio tipo. No hay excepciones cruzadas entre tipos.
 2. Si `email_ingresado != email_asignado_del_link` → bloqueo inmediato con mensaje "correo no autorizado para este enlace".
 3. Si el alumno falla el OTP 3 veces seguidas → bloqueo temporal del link por 15 minutos, medido desde el 3er intento.
 4. Si `devices_registrados < 2` y llega un FP nuevo → registra el FP y da acceso.
@@ -127,7 +128,7 @@ Admin accede a P6 y P7 desde el Dashboard (P2), no solo desde el login.
 16. El login del staff usa solo email + password, sin OTP. El doble factor (OTP + fingerprint) es una barrera diseñada específicamente para el alumno externo (actor no confiable); el staff es personal interno de ADIPA.
 17. El token de sesión del alumno se renueva automáticamente (heartbeat) mientras el reproductor esté activo, sin exigir nueva autenticación. Si expira por inactividad, el alumno debe repetir correo + OTP; el fingerprint ya registrado no cuenta como device nuevo.
 18. Después del bloqueo temporal de 15 min por OTP inválido (regla 3), el contador de intentos se reinicia a 3.
-19. El catálogo de cursos/diplomados lo gestiona únicamente el Admin (P7). Un contenido no se elimina físicamente si tiene links asociados: se desactiva (`activo: false`) y deja de listarse en P3, pero los links ya creados sobre él siguen funcionando con normalidad.
+19. El catálogo de cursos/diplomados/seminarios lo gestiona únicamente el Admin (P7). Un contenido no se elimina físicamente si tiene links asociados: se desactiva (`activo: false`) y deja de listarse en P3, pero los links ya creados sobre él siguen funcionando con normalidad.
 
 ## Fuera de alcance (qué NO se construye en esta versión)
 

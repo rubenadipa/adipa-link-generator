@@ -19,6 +19,7 @@ export default async function LoginPage() {
             <li>Admin: ruben@adipa.cl / admin-demo-2026</li>
             <li>Staff cursos: staff.cursos@adipa.cl / cursos-demo-2026</li>
             <li>Staff diplomados: staff.diplomados@adipa.cl / diplomados-demo-2026</li>
+            <li>Staff seminarios: staff.seminarios@adipa.cl / seminarios-demo-2026</li>
           </ul>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getStaffSession } from "@/lib/auth-staff";
-import { listContenidos } from "@/lib/store";
+import { listContenidos, tipoStaffToContenido } from "@/lib/store";
 import { Topbar } from "@/components/staff/Topbar";
 import { NewLinkForm } from "./NewLinkForm";
 
@@ -10,7 +10,7 @@ export default async function NewLinkPage() {
   const session = await getStaffSession();
   if (!session) redirect("/login");
 
-  const tipo = session.staff.rol === "admin" ? null : session.staff.tipo === "cursos" ? "curso" : "diplomado";
+  const tipo = session.staff.rol === "admin" ? null : tipoStaffToContenido(session.staff.tipo);
   const contenidos = await listContenidos({ soloActivos: true, tipo });
 
   return (

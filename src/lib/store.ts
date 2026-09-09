@@ -25,19 +25,21 @@ export const SLOTS_MAX = 3;
 const SEED_STAFF_ADMIN_ID = "00000000-0000-4000-8000-000000000001";
 const SEED_STAFF_CURSOS_ID = "00000000-0000-4000-8000-000000000002";
 const SEED_STAFF_DIPLOMADOS_ID = "00000000-0000-4000-8000-000000000003";
+const SEED_STAFF_SEMINARIOS_ID = "00000000-0000-4000-8000-000000000004";
 const SEED_CONTENIDO_EXCEL_ID = "00000000-0000-4000-8000-000000000101";
 const SEED_CONTENIDO_MARKETING_ID = "00000000-0000-4000-8000-000000000102";
 const SEED_CONTENIDO_DIPLOMADO_ID = "00000000-0000-4000-8000-000000000103";
+const SEED_CONTENIDO_SEMINARIO_ID = "00000000-0000-4000-8000-000000000104";
 
 let seeded = false;
 
+// Nota: no cortamos el seed temprano solo porque la tabla ya tenga filas —
+// `onConflictDoNothing()` protege lo existente, así que esto también sirve
+// para agregar filas semilla nuevas (ej. seminarios) a una base que ya
+// estaba poblada por una versión anterior. `seeded` solo evita repetir el
+// round-trip en requests posteriores de la misma instancia tibia.
 async function ensureSeeded(): Promise<void> {
   if (seeded) return;
-  const existente = await db.select({ id: staff.id }).from(staff).limit(1);
-  if (existente.length > 0) {
-    seeded = true;
-    return;
-  }
 
   const now = new Date();
   await db
@@ -70,6 +72,15 @@ async function ensureSeeded(): Promise<void> {
         activo: true,
         createdAt: now,
       },
+      {
+        id: SEED_STAFF_SEMINARIOS_ID,
+        email: "staff.seminarios@adipa.cl",
+        passwordHash: bcrypt.hashSync("seminarios-demo-2026", 10),
+        rol: "staff",
+        tipo: "seminarios",
+        activo: true,
+        createdAt: now,
+      },
     ])
     .onConflictDoNothing();
 
@@ -97,6 +108,14 @@ async function ensureSeeded(): Promise<void> {
         tipo: "diplomado",
         titulo: "Diplomado en Gestión de Proyectos",
         descripcion: "Programa integral de gestión de proyectos con metodologías ágiles.",
+        activo: true,
+        createdAt: now,
+      },
+      {
+        id: SEED_CONTENIDO_SEMINARIO_ID,
+        tipo: "seminario",
+        titulo: "Seminario de Liderazgo y Gestión del Cambio",
+        descripcion: "Jornada intensiva sobre liderazgo aplicado y gestión del cambio organizacional.",
         activo: true,
         createdAt: now,
       },
@@ -314,9 +333,10 @@ export async function findLinkByToken(token: string): Promise<LinkRecord | undef
   return rows[0] ? toLinkRecord(rows[0]) : undefined;
 }
 
-function tipoStaffToContenido(tipo: TipoStaff): TipoContenido | null {
+export function tipoStaffToContenido(tipo: TipoStaff): TipoContenido | null {
   if (tipo === "cursos") return "curso";
   if (tipo === "diplomados") return "diplomado";
+  if (tipo === "seminarios") return "seminario";
   return null;
 }
 

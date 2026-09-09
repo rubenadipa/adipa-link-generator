@@ -1,6 +1,6 @@
 export type Rol = "admin" | "staff";
-export type TipoStaff = "cursos" | "diplomados" | null;
-export type TipoContenido = "curso" | "diplomado";
+export type TipoStaff = "cursos" | "diplomados" | "seminarios" | null;
+export type TipoContenido = "curso" | "diplomado" | "seminario";
 export type EstadoLink = "activo" | "revocado";
 export type EstadoEfectivoLink = "activo" | "expirado" | "revocado";
 

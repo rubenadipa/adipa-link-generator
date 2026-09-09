@@ -5,14 +5,14 @@ export const staff = pgTable("staff", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   rol: text("rol").notNull(), // "admin" | "staff"
-  tipo: text("tipo"), // "cursos" | "diplomados" | null
+  tipo: text("tipo"), // "cursos" | "diplomados" | "seminarios" | null
   activo: boolean("activo").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const contenidos = pgTable("contenidos", {
   id: text("id").primaryKey(),
-  tipo: text("tipo").notNull(), // "curso" | "diplomado"
+  tipo: text("tipo").notNull(), // "curso" | "diplomado" | "seminario"
   titulo: text("titulo").notNull(),
   descripcion: text("descripcion").notNull().default(""),
   activo: boolean("activo").notNull().default(true),

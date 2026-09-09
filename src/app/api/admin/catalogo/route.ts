@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   if (!admin) return NextResponse.json({ ok: false, error: "no_autorizado" }, { status: 403 });
 
   const body = await req.json().catch(() => null);
-  const tipo = body?.tipo === "curso" || body?.tipo === "diplomado" ? body.tipo : null;
+  const tipo = body?.tipo === "curso" || body?.tipo === "diplomado" || body?.tipo === "seminario" ? body.tipo : null;
   const titulo = typeof body?.titulo === "string" ? body.titulo.trim() : "";
   const descripcion = typeof body?.descripcion === "string" ? body.descripcion.trim() : "";
 

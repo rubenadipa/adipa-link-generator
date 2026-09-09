@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStaffSession } from "@/lib/auth-staff";
-import { crearLink, existeLinkActivoDuplicado, findContenidoById } from "@/lib/store";
+import { crearLink, existeLinkActivoDuplicado, findContenidoById, tipoStaffToContenido } from "@/lib/store";
 
 // P3. Crear link — valida catálogo, aisla por tipo de staff (regla 1) y
 // advierte (sin bloquear) si el correo ya tiene un link activo para el
@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "contenido_invalido" }, { status: 400 });
   }
 
-  const tipoStaffEsperado = session.staff.rol === "admin" ? contenido.tipo : session.staff.tipo === "cursos" ? "curso" : "diplomado";
+  const tipoStaffEsperado =
+    session.staff.rol === "admin" ? contenido.tipo : tipoStaffToContenido(session.staff.tipo);
   if (session.staff.rol !== "admin" && contenido.tipo !== tipoStaffEsperado) {
     return NextResponse.json({ ok: false, error: "fuera_de_tipo" }, { status: 403 });
   }

@@ -18,7 +18,7 @@ export function StaffTable({ staff, currentStaffId }: { staff: StaffAccount[]; c
     }
   }
 
-  async function cambiarTipo(id: string, tipo: "cursos" | "diplomados") {
+  async function cambiarTipo(id: string, tipo: "cursos" | "diplomados" | "seminarios") {
     setLoadingId(id);
     try {
       await fetch(`/api/admin/staff/${id}/tipo`, {
@@ -54,11 +54,12 @@ export function StaffTable({ staff, currentStaffId }: { staff: StaffAccount[]; c
                 <select
                   defaultValue={s.tipo ?? "cursos"}
                   disabled={!s.activo || loadingId === s.id}
-                  onChange={(e) => cambiarTipo(s.id, e.target.value as "cursos" | "diplomados")}
+                  onChange={(e) => cambiarTipo(s.id, e.target.value as "cursos" | "diplomados" | "seminarios")}
                   className="rounded-md border border-neutral-300 px-1 py-0.5 text-xs"
                 >
                   <option value="cursos">Cursos</option>
                   <option value="diplomados">Diplomados</option>
+                  <option value="seminarios">Seminarios</option>
                 </select>
               ) : (
                 <span className="text-neutral-600">—</span>
