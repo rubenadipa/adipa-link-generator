@@ -33,12 +33,27 @@ const globalForDb = globalThis as unknown as { __adipaDb?: Db };
 export const SLOTS_DEFAULT = 2;
 export const SLOTS_MAX = 3;
 
+// IDs fijos (no randomUUID) para las filas semilla: en Vercel cada instancia
+// serverless corre su propio seed en memoria en un cold start distinto, así
+// que un id aleatorio generado en la instancia A (ej. al hacer login) no
+// existe en la instancia B que atienda la siguiente request. Fijar estos IDs
+// hace que el login y el catálogo semilla sean consistentes entre instancias.
+// Los links/staff/catálogo creados en vivo durante la demo NO tienen este
+// arreglo — siguen sujetos a la limitación de persistencia in-memory (ver
+// BRIEF.md, "Fuera de alcance" #12).
+const SEED_STAFF_ADMIN_ID = "00000000-0000-4000-8000-000000000001";
+const SEED_STAFF_CURSOS_ID = "00000000-0000-4000-8000-000000000002";
+const SEED_STAFF_DIPLOMADOS_ID = "00000000-0000-4000-8000-000000000003";
+const SEED_CONTENIDO_EXCEL_ID = "00000000-0000-4000-8000-000000000101";
+const SEED_CONTENIDO_MARKETING_ID = "00000000-0000-4000-8000-000000000102";
+const SEED_CONTENIDO_DIPLOMADO_ID = "00000000-0000-4000-8000-000000000103";
+
 function seed(): Db {
   const now = Date.now();
 
   const staff: StaffAccount[] = [
     {
-      id: newId(),
+      id: SEED_STAFF_ADMIN_ID,
       email: "rodrigo@adipa.cl",
       passwordHash: bcrypt.hashSync("admin-demo-2026", 10),
       rol: "admin",
@@ -47,7 +62,7 @@ function seed(): Db {
       createdAt: now,
     },
     {
-      id: newId(),
+      id: SEED_STAFF_CURSOS_ID,
       email: "staff.cursos@adipa.cl",
       passwordHash: bcrypt.hashSync("cursos-demo-2026", 10),
       rol: "staff",
@@ -56,7 +71,7 @@ function seed(): Db {
       createdAt: now,
     },
     {
-      id: newId(),
+      id: SEED_STAFF_DIPLOMADOS_ID,
       email: "staff.diplomados@adipa.cl",
       passwordHash: bcrypt.hashSync("diplomados-demo-2026", 10),
       rol: "staff",
@@ -68,7 +83,7 @@ function seed(): Db {
 
   const contenidos: Contenido[] = [
     {
-      id: newId(),
+      id: SEED_CONTENIDO_EXCEL_ID,
       tipo: "curso",
       titulo: "Excel Avanzado para Gestión",
       descripcion: "Curso de Excel orientado a análisis y reportes de gestión.",
@@ -76,7 +91,7 @@ function seed(): Db {
       createdAt: now,
     },
     {
-      id: newId(),
+      id: SEED_CONTENIDO_MARKETING_ID,
       tipo: "curso",
       titulo: "Marketing Digital 360",
       descripcion: "Fundamentos de marketing digital, redes y performance.",
@@ -84,7 +99,7 @@ function seed(): Db {
       createdAt: now,
     },
     {
-      id: newId(),
+      id: SEED_CONTENIDO_DIPLOMADO_ID,
       tipo: "diplomado",
       titulo: "Diplomado en Gestión de Proyectos",
       descripcion: "Programa integral de gestión de proyectos con metodologías ágiles.",
