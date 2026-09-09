@@ -8,6 +8,6 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const acceso = await requireStaffLinkAccess(id);
   if (!acceso) return NextResponse.json({ ok: false, error: "no_autorizado" }, { status: 403 });
 
-  const link = sumarSlot(id);
+  const link = await sumarSlot(id);
   return NextResponse.json({ ok: true, slotsMax: link?.slotsMax });
 }

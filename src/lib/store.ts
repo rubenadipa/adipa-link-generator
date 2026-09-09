@@ -1,4 +1,7 @@
 import bcrypt from "bcryptjs";
+import { and, desc, eq, gte } from "drizzle-orm";
+import { db } from "./db/client";
+import { contenidos, devices, links, logs, otps, staff } from "./db/schema";
 import { newId, newTokenPublico } from "./ids";
 import type {
   Contenido,
@@ -8,39 +11,17 @@ import type {
   LogAccesoRecord,
   OtpRecord,
   ResultadoAcceso,
-  Rol,
   StaffAccount,
   TipoContenido,
   TipoStaff,
 } from "./types";
 
-/**
- * Persistencia in-memory (v1 demo) — ver BRIEF.md, "Fuera de alcance" #12.
- * Todo se pierde al reiniciar el proceso de Node. Se ancla a `globalThis`
- * para sobrevivir al hot-reload de `next dev`.
- */
-interface Db {
-  staff: StaffAccount[];
-  contenidos: Contenido[];
-  links: LinkRecord[];
-  devices: DeviceRecord[];
-  logs: LogAccesoRecord[];
-  otps: Map<string, OtpRecord>;
-}
-
-const globalForDb = globalThis as unknown as { __adipaDb?: Db };
-
 export const SLOTS_DEFAULT = 2;
 export const SLOTS_MAX = 3;
 
-// IDs fijos (no randomUUID) para las filas semilla: en Vercel cada instancia
-// serverless corre su propio seed en memoria en un cold start distinto, así
-// que un id aleatorio generado en la instancia A (ej. al hacer login) no
-// existe en la instancia B que atienda la siguiente request. Fijar estos IDs
-// hace que el login y el catálogo semilla sean consistentes entre instancias.
-// Los links/staff/catálogo creados en vivo durante la demo NO tienen este
-// arreglo — siguen sujetos a la limitación de persistencia in-memory (ver
-// BRIEF.md, "Fuera de alcance" #12).
+// IDs fijos para las filas semilla (ver migración de in-memory a Postgres):
+// se insertan una sola vez, así que ya no hay problema de instancias
+// serverless con datos distintos entre sí.
 const SEED_STAFF_ADMIN_ID = "00000000-0000-4000-8000-000000000001";
 const SEED_STAFF_CURSOS_ID = "00000000-0000-4000-8000-000000000002";
 const SEED_STAFF_DIPLOMADOS_ID = "00000000-0000-4000-8000-000000000003";
@@ -48,161 +29,268 @@ const SEED_CONTENIDO_EXCEL_ID = "00000000-0000-4000-8000-000000000101";
 const SEED_CONTENIDO_MARKETING_ID = "00000000-0000-4000-8000-000000000102";
 const SEED_CONTENIDO_DIPLOMADO_ID = "00000000-0000-4000-8000-000000000103";
 
-function seed(): Db {
-  const now = Date.now();
+let seeded = false;
 
-  const staff: StaffAccount[] = [
-    {
-      id: SEED_STAFF_ADMIN_ID,
-      email: "ruben@adipa.cl",
-      passwordHash: bcrypt.hashSync("admin-demo-2026", 10),
-      rol: "admin",
-      tipo: null,
-      activo: true,
-      createdAt: now,
-    },
-    {
-      id: SEED_STAFF_CURSOS_ID,
-      email: "staff.cursos@adipa.cl",
-      passwordHash: bcrypt.hashSync("cursos-demo-2026", 10),
-      rol: "staff",
-      tipo: "cursos",
-      activo: true,
-      createdAt: now,
-    },
-    {
-      id: SEED_STAFF_DIPLOMADOS_ID,
-      email: "staff.diplomados@adipa.cl",
-      passwordHash: bcrypt.hashSync("diplomados-demo-2026", 10),
-      rol: "staff",
-      tipo: "diplomados",
-      activo: true,
-      createdAt: now,
-    },
-  ];
+async function ensureSeeded(): Promise<void> {
+  if (seeded) return;
+  const existente = await db.select({ id: staff.id }).from(staff).limit(1);
+  if (existente.length > 0) {
+    seeded = true;
+    return;
+  }
 
-  const contenidos: Contenido[] = [
-    {
-      id: SEED_CONTENIDO_EXCEL_ID,
-      tipo: "curso",
-      titulo: "Excel Avanzado para Gestión",
-      descripcion: "Curso de Excel orientado a análisis y reportes de gestión.",
-      activo: true,
-      createdAt: now,
-    },
-    {
-      id: SEED_CONTENIDO_MARKETING_ID,
-      tipo: "curso",
-      titulo: "Marketing Digital 360",
-      descripcion: "Fundamentos de marketing digital, redes y performance.",
-      activo: true,
-      createdAt: now,
-    },
-    {
-      id: SEED_CONTENIDO_DIPLOMADO_ID,
-      tipo: "diplomado",
-      titulo: "Diplomado en Gestión de Proyectos",
-      descripcion: "Programa integral de gestión de proyectos con metodologías ágiles.",
-      activo: true,
-      createdAt: now,
-    },
-  ];
+  const now = new Date();
+  await db
+    .insert(staff)
+    .values([
+      {
+        id: SEED_STAFF_ADMIN_ID,
+        email: "ruben@adipa.cl",
+        passwordHash: bcrypt.hashSync("admin-demo-2026", 10),
+        rol: "admin",
+        tipo: null,
+        activo: true,
+        createdAt: now,
+      },
+      {
+        id: SEED_STAFF_CURSOS_ID,
+        email: "staff.cursos@adipa.cl",
+        passwordHash: bcrypt.hashSync("cursos-demo-2026", 10),
+        rol: "staff",
+        tipo: "cursos",
+        activo: true,
+        createdAt: now,
+      },
+      {
+        id: SEED_STAFF_DIPLOMADOS_ID,
+        email: "staff.diplomados@adipa.cl",
+        passwordHash: bcrypt.hashSync("diplomados-demo-2026", 10),
+        rol: "staff",
+        tipo: "diplomados",
+        activo: true,
+        createdAt: now,
+      },
+    ])
+    .onConflictDoNothing();
 
+  await db
+    .insert(contenidos)
+    .values([
+      {
+        id: SEED_CONTENIDO_EXCEL_ID,
+        tipo: "curso",
+        titulo: "Excel Avanzado para Gestión",
+        descripcion: "Curso de Excel orientado a análisis y reportes de gestión.",
+        activo: true,
+        createdAt: now,
+      },
+      {
+        id: SEED_CONTENIDO_MARKETING_ID,
+        tipo: "curso",
+        titulo: "Marketing Digital 360",
+        descripcion: "Fundamentos de marketing digital, redes y performance.",
+        activo: true,
+        createdAt: now,
+      },
+      {
+        id: SEED_CONTENIDO_DIPLOMADO_ID,
+        tipo: "diplomado",
+        titulo: "Diplomado en Gestión de Proyectos",
+        descripcion: "Programa integral de gestión de proyectos con metodologías ágiles.",
+        activo: true,
+        createdAt: now,
+      },
+    ])
+    .onConflictDoNothing();
+
+  seeded = true;
+}
+
+function toStaffAccount(row: typeof staff.$inferSelect): StaffAccount {
   return {
-    staff,
-    contenidos,
-    links: [],
-    devices: [],
-    logs: [],
-    otps: new Map(),
+    id: row.id,
+    email: row.email,
+    passwordHash: row.passwordHash,
+    rol: row.rol as StaffAccount["rol"],
+    tipo: row.tipo as TipoStaff,
+    activo: row.activo,
+    createdAt: row.createdAt.getTime(),
   };
 }
 
-function db(): Db {
-  if (!globalForDb.__adipaDb) {
-    globalForDb.__adipaDb = seed();
-  }
-  return globalForDb.__adipaDb;
+function toContenido(row: typeof contenidos.$inferSelect): Contenido {
+  return {
+    id: row.id,
+    tipo: row.tipo as TipoContenido,
+    titulo: row.titulo,
+    descripcion: row.descripcion,
+    activo: row.activo,
+    createdAt: row.createdAt.getTime(),
+  };
+}
+
+function toLinkRecord(row: typeof links.$inferSelect): LinkRecord {
+  return {
+    id: row.id,
+    tokenPublico: row.tokenPublico,
+    contenidoId: row.contenidoId,
+    emailAsignado: row.emailAsignado,
+    estado: row.estado as LinkRecord["estado"],
+    validezDias: row.validezDias,
+    primerAcceso: row.primerAcceso ? row.primerAcceso.getTime() : null,
+    slotsMax: row.slotsMax,
+    createdAt: row.createdAt.getTime(),
+    createdBy: row.createdBy,
+  };
+}
+
+function toDeviceRecord(row: typeof devices.$inferSelect): DeviceRecord {
+  return {
+    id: row.id,
+    linkId: row.linkId,
+    fingerprint: row.fingerprint,
+    primerAcceso: row.primerAcceso.getTime(),
+    ultimoAcceso: row.ultimoAcceso.getTime(),
+  };
+}
+
+function toLogRecord(row: typeof logs.$inferSelect): LogAccesoRecord {
+  return {
+    id: row.id,
+    linkId: row.linkId,
+    emailIntentado: row.emailIntentado,
+    ip: row.ip,
+    fechaHora: row.fechaHora.getTime(),
+    browser: row.browser,
+    pais: row.pais,
+    resultado: row.resultado as ResultadoAcceso,
+  };
+}
+
+function toOtpRecord(row: typeof otps.$inferSelect): OtpRecord {
+  return {
+    linkId: row.linkId,
+    codigo: row.codigo,
+    expiresAt: row.expiresAt.getTime(),
+    intentosFallidos: row.intentosFallidos,
+    bloqueadoHasta: row.bloqueadoHasta ? row.bloqueadoHasta.getTime() : null,
+    lastSentAt: row.lastSentAt.getTime(),
+  };
 }
 
 // ---------- Staff ----------
 
-export function findStaffByEmail(email: string): StaffAccount | undefined {
-  return db().staff.find((s) => s.email.toLowerCase() === email.toLowerCase());
+export async function findStaffByEmail(email: string): Promise<StaffAccount | undefined> {
+  await ensureSeeded();
+  const rows = await db
+    .select()
+    .from(staff)
+    .where(eq(staff.email, email.toLowerCase()))
+    .limit(1);
+  return rows[0] ? toStaffAccount(rows[0]) : undefined;
 }
 
-export function findStaffById(id: string): StaffAccount | undefined {
-  return db().staff.find((s) => s.id === id);
+export async function findStaffById(id: string): Promise<StaffAccount | undefined> {
+  await ensureSeeded();
+  const rows = await db.select().from(staff).where(eq(staff.id, id)).limit(1);
+  return rows[0] ? toStaffAccount(rows[0]) : undefined;
 }
 
-export function listStaff(): StaffAccount[] {
-  return [...db().staff].sort((a, b) => a.createdAt - b.createdAt);
+export async function listStaff(): Promise<StaffAccount[]> {
+  await ensureSeeded();
+  const rows = await db.select().from(staff).orderBy(staff.createdAt);
+  return rows.map(toStaffAccount);
 }
 
-export function crearStaff(params: { email: string; tipo: Exclude<TipoStaff, null>; passwordPlano: string }): StaffAccount {
-  const account: StaffAccount = {
+export async function crearStaff(params: {
+  email: string;
+  tipo: Exclude<TipoStaff, null>;
+  passwordPlano: string;
+}): Promise<StaffAccount> {
+  const row = {
     id: newId(),
-    email: params.email,
+    email: params.email.toLowerCase(),
     passwordHash: bcrypt.hashSync(params.passwordPlano, 10),
-    rol: "staff",
+    rol: "staff" as const,
     tipo: params.tipo,
     activo: true,
-    createdAt: Date.now(),
+    createdAt: new Date(),
   };
-  db().staff.push(account);
-  return account;
+  await db.insert(staff).values(row);
+  return toStaffAccount(row);
 }
 
-export function revocarStaff(id: string): StaffAccount | undefined {
-  const s = findStaffById(id);
-  if (s) s.activo = false;
-  return s;
+export async function revocarStaff(id: string): Promise<void> {
+  await db.update(staff).set({ activo: false }).where(eq(staff.id, id));
 }
 
-export function cambiarTipoStaff(id: string, tipo: Exclude<TipoStaff, null>): StaffAccount | undefined {
-  const s = findStaffById(id);
-  if (s && s.rol === "staff") s.tipo = tipo;
-  return s;
+export async function cambiarTipoStaff(id: string, tipo: Exclude<TipoStaff, null>): Promise<void> {
+  await db.update(staff).set({ tipo }).where(and(eq(staff.id, id), eq(staff.rol, "staff")));
 }
 
 // ---------- Catálogo (contenidos) ----------
 
-export function listContenidos(filtro?: { soloActivos?: boolean; tipo?: TipoContenido | null }): Contenido[] {
-  let items = [...db().contenidos];
-  if (filtro?.soloActivos) items = items.filter((c) => c.activo);
-  if (filtro?.tipo) items = items.filter((c) => c.tipo === filtro.tipo);
-  return items.sort((a, b) => a.titulo.localeCompare(b.titulo));
+export async function listContenidos(filtro?: {
+  soloActivos?: boolean;
+  tipo?: TipoContenido | null;
+}): Promise<Contenido[]> {
+  await ensureSeeded();
+  const condiciones = [];
+  if (filtro?.soloActivos) condiciones.push(eq(contenidos.activo, true));
+  if (filtro?.tipo) condiciones.push(eq(contenidos.tipo, filtro.tipo));
+
+  const rows = await db
+    .select()
+    .from(contenidos)
+    .where(condiciones.length ? and(...condiciones) : undefined)
+    .orderBy(contenidos.titulo);
+  return rows.map(toContenido);
 }
 
-export function findContenidoById(id: string): Contenido | undefined {
-  return db().contenidos.find((c) => c.id === id);
+export async function findContenidoById(id: string): Promise<Contenido | undefined> {
+  await ensureSeeded();
+  const rows = await db.select().from(contenidos).where(eq(contenidos.id, id)).limit(1);
+  return rows[0] ? toContenido(rows[0]) : undefined;
 }
 
-export function crearContenido(params: { tipo: TipoContenido; titulo: string; descripcion: string }): Contenido {
-  const contenido: Contenido = {
+export async function crearContenido(params: {
+  tipo: TipoContenido;
+  titulo: string;
+  descripcion: string;
+}): Promise<Contenido> {
+  const row = {
     id: newId(),
     tipo: params.tipo,
     titulo: params.titulo,
     descripcion: params.descripcion,
     activo: true,
-    createdAt: Date.now(),
+    createdAt: new Date(),
   };
-  db().contenidos.push(contenido);
-  return contenido;
+  await db.insert(contenidos).values(row);
+  return toContenido(row);
 }
 
-export function editarContenido(id: string, params: { titulo?: string; descripcion?: string }): Contenido | undefined {
-  const c = findContenidoById(id);
-  if (!c) return undefined;
-  if (params.titulo !== undefined) c.titulo = params.titulo;
-  if (params.descripcion !== undefined) c.descripcion = params.descripcion;
-  return c;
+export async function editarContenido(
+  id: string,
+  params: { titulo?: string; descripcion?: string }
+): Promise<Contenido | undefined> {
+  const existente = await findContenidoById(id);
+  if (!existente) return undefined;
+
+  const cambios: Partial<{ titulo: string; descripcion: string }> = {};
+  if (params.titulo !== undefined) cambios.titulo = params.titulo;
+  if (params.descripcion !== undefined) cambios.descripcion = params.descripcion;
+  if (Object.keys(cambios).length > 0) {
+    await db.update(contenidos).set(cambios).where(eq(contenidos.id, id));
+  }
+  return { ...existente, ...cambios };
 }
 
-export function desactivarContenido(id: string): Contenido | undefined {
-  const c = findContenidoById(id);
-  if (c) c.activo = false;
-  return c;
+export async function desactivarContenido(id: string): Promise<Contenido | undefined> {
+  const existente = await findContenidoById(id);
+  if (!existente) return undefined;
+  await db.update(contenidos).set({ activo: false }).where(eq(contenidos.id, id));
+  return { ...existente, activo: false };
 }
 
 // ---------- Links ----------
@@ -216,17 +304,14 @@ export function computeEstadoEfectivo(link: LinkRecord, ahora = Date.now()): Est
   return "activo";
 }
 
-export function findLinkById(id: string): LinkRecord | undefined {
-  return db().links.find((l) => l.id === id);
+export async function findLinkById(id: string): Promise<LinkRecord | undefined> {
+  const rows = await db.select().from(links).where(eq(links.id, id)).limit(1);
+  return rows[0] ? toLinkRecord(rows[0]) : undefined;
 }
 
-export function findLinkByToken(token: string): LinkRecord | undefined {
-  return db().links.find((l) => l.tokenPublico === token);
-}
-
-export function listLinksForStaff(staff: StaffAccount): LinkRecord[] {
-  const items = staff.rol === "admin" ? db().links : db().links.filter((l) => findContenidoById(l.contenidoId)?.tipo === tipoStaffToContenido(staff.tipo));
-  return [...items].sort((a, b) => b.createdAt - a.createdAt);
+export async function findLinkByToken(token: string): Promise<LinkRecord | undefined> {
+  const rows = await db.select().from(links).where(eq(links.tokenPublico, token)).limit(1);
+  return rows[0] ? toLinkRecord(rows[0]) : undefined;
 }
 
 function tipoStaffToContenido(tipo: TipoStaff): TipoContenido | null {
@@ -235,151 +320,193 @@ function tipoStaffToContenido(tipo: TipoStaff): TipoContenido | null {
   return null;
 }
 
-export function puedeAccederLink(staff: StaffAccount, link: LinkRecord): boolean {
-  if (staff.rol === "admin") return true;
-  const contenido = findContenidoById(link.contenidoId);
-  return !!contenido && contenido.tipo === tipoStaffToContenido(staff.tipo);
+export async function listLinksForStaff(staffAccount: StaffAccount): Promise<LinkRecord[]> {
+  const rows = await db
+    .select({ link: links, contenidoTipo: contenidos.tipo })
+    .from(links)
+    .innerJoin(contenidos, eq(links.contenidoId, contenidos.id))
+    .orderBy(desc(links.createdAt));
+
+  const items =
+    staffAccount.rol === "admin"
+      ? rows
+      : rows.filter((r) => r.contenidoTipo === tipoStaffToContenido(staffAccount.tipo));
+
+  return items.map((r) => toLinkRecord(r.link));
 }
 
-export function existeLinkActivoDuplicado(email: string, contenidoId: string): boolean {
-  return db().links.some(
-    (l) =>
-      l.emailAsignado.toLowerCase() === email.toLowerCase() &&
-      l.contenidoId === contenidoId &&
-      computeEstadoEfectivo(l) === "activo"
-  );
+export async function puedeAccederLink(staffAccount: StaffAccount, link: LinkRecord): Promise<boolean> {
+  if (staffAccount.rol === "admin") return true;
+  const contenido = await findContenidoById(link.contenidoId);
+  return !!contenido && contenido.tipo === tipoStaffToContenido(staffAccount.tipo);
 }
 
-export function crearLink(params: {
+export async function existeLinkActivoDuplicado(email: string, contenidoId: string): Promise<boolean> {
+  const rows = await db
+    .select()
+    .from(links)
+    .where(and(eq(links.emailAsignado, email), eq(links.contenidoId, contenidoId)));
+  return rows.some((r) => computeEstadoEfectivo(toLinkRecord(r)) === "activo");
+}
+
+export async function crearLink(params: {
   contenidoId: string;
   emailAlumno: string;
   validezDias: number | null;
   createdBy: string;
-}): LinkRecord {
-  const link: LinkRecord = {
+}): Promise<LinkRecord> {
+  const row = {
     id: newId(),
     tokenPublico: newTokenPublico(),
     contenidoId: params.contenidoId,
     emailAsignado: params.emailAlumno,
-    estado: "activo",
+    estado: "activo" as const,
     validezDias: params.validezDias,
     primerAcceso: null,
     slotsMax: SLOTS_DEFAULT,
-    createdAt: Date.now(),
+    createdAt: new Date(),
     createdBy: params.createdBy,
   };
-  db().links.push(link);
-  return link;
+  await db.insert(links).values(row);
+  return toLinkRecord(row);
 }
 
-export function revocarLink(id: string): LinkRecord | undefined {
-  const link = findLinkById(id);
-  if (link) link.estado = "revocado";
-  return link;
+export async function revocarLink(id: string): Promise<void> {
+  await db.update(links).set({ estado: "revocado" }).where(eq(links.id, id));
 }
 
-export function extenderValidez(id: string, dias: number): LinkRecord | undefined {
-  const link = findLinkById(id);
+export async function extenderValidez(id: string, dias: number): Promise<LinkRecord | undefined> {
+  const link = await findLinkById(id);
   if (!link) return undefined;
-  link.validezDias = (link.validezDias ?? 0) + dias;
-  return link;
+  const nuevaValidez = (link.validezDias ?? 0) + dias;
+  await db.update(links).set({ validezDias: nuevaValidez }).where(eq(links.id, id));
+  return { ...link, validezDias: nuevaValidez };
 }
 
-export function sumarSlot(id: string): LinkRecord | undefined {
-  const link = findLinkById(id);
+export async function sumarSlot(id: string): Promise<LinkRecord | undefined> {
+  const link = await findLinkById(id);
   if (!link) return undefined;
-  link.slotsMax = Math.min(SLOTS_MAX, link.slotsMax + 1);
-  return link;
+  const nuevoSlots = Math.min(SLOTS_MAX, link.slotsMax + 1);
+  await db.update(links).set({ slotsMax: nuevoSlots }).where(eq(links.id, id));
+  return { ...link, slotsMax: nuevoSlots };
 }
 
-export function marcarPrimerAccesoSiCorresponde(id: string): void {
-  const link = findLinkById(id);
-  if (link && link.primerAcceso == null) link.primerAcceso = Date.now();
+export async function marcarPrimerAccesoSiCorresponde(id: string): Promise<void> {
+  const link = await findLinkById(id);
+  if (link && link.primerAcceso == null) {
+    await db.update(links).set({ primerAcceso: new Date() }).where(eq(links.id, id));
+  }
 }
 
 // ---------- Devices ----------
 
-export function listDevicesForLink(linkId: string): DeviceRecord[] {
-  return db()
-    .devices.filter((d) => d.linkId === linkId)
-    .sort((a, b) => a.primerAcceso - b.primerAcceso);
+export async function listDevicesForLink(linkId: string): Promise<DeviceRecord[]> {
+  const rows = await db.select().from(devices).where(eq(devices.linkId, linkId)).orderBy(devices.primerAcceso);
+  return rows.map(toDeviceRecord);
 }
 
-export function findDeviceByFingerprint(linkId: string, fingerprint: string): DeviceRecord | undefined {
-  return db().devices.find((d) => d.linkId === linkId && d.fingerprint === fingerprint);
+export async function findDeviceByFingerprint(
+  linkId: string,
+  fingerprint: string
+): Promise<DeviceRecord | undefined> {
+  const rows = await db
+    .select()
+    .from(devices)
+    .where(and(eq(devices.linkId, linkId), eq(devices.fingerprint, fingerprint)))
+    .limit(1);
+  return rows[0] ? toDeviceRecord(rows[0]) : undefined;
 }
 
-export function registrarDevice(linkId: string, fingerprint: string): DeviceRecord {
-  const now = Date.now();
-  const device: DeviceRecord = {
-    id: newId(),
-    linkId,
-    fingerprint,
-    primerAcceso: now,
-    ultimoAcceso: now,
-  };
-  db().devices.push(device);
-  return device;
+export async function registrarDevice(linkId: string, fingerprint: string): Promise<DeviceRecord> {
+  const now = new Date();
+  const row = { id: newId(), linkId, fingerprint, primerAcceso: now, ultimoAcceso: now };
+  await db.insert(devices).values(row);
+  return toDeviceRecord(row);
 }
 
-export function tocarDevice(device: DeviceRecord): void {
-  device.ultimoAcceso = Date.now();
+export async function tocarDevice(device: DeviceRecord): Promise<void> {
+  await db.update(devices).set({ ultimoAcceso: new Date() }).where(eq(devices.id, device.id));
 }
 
-export function revocarDevice(linkId: string, deviceId: string): boolean {
-  const antes = db().devices.length;
-  db().devices = db().devices.filter((d) => !(d.linkId === linkId && d.id === deviceId));
-  return db().devices.length < antes;
+export async function revocarDevice(linkId: string, deviceId: string): Promise<boolean> {
+  const resultado = await db
+    .delete(devices)
+    .where(and(eq(devices.linkId, linkId), eq(devices.id, deviceId)))
+    .returning({ id: devices.id });
+  return resultado.length > 0;
 }
 
 // ---------- Logs de acceso ----------
 
-export function agregarLog(entry: {
+export async function agregarLog(entry: {
   linkId: string;
   emailIntentado: string;
   ip: string;
   browser: string;
   pais: string;
   resultado: ResultadoAcceso;
-}): LogAccesoRecord {
-  const log: LogAccesoRecord = {
+}): Promise<void> {
+  await db.insert(logs).values({
     id: newId(),
     linkId: entry.linkId,
     emailIntentado: entry.emailIntentado,
     ip: entry.ip,
-    fechaHora: Date.now(),
+    fechaHora: new Date(),
     browser: entry.browser,
     pais: entry.pais,
     resultado: entry.resultado,
-  };
-  db().logs.push(log);
-  return log;
+  });
 }
 
-export function listLogsForLink(linkId: string): LogAccesoRecord[] {
-  return db()
-    .logs.filter((l) => l.linkId === linkId)
-    .sort((a, b) => b.fechaHora - a.fechaHora);
+export async function listLogsForLink(linkId: string): Promise<LogAccesoRecord[]> {
+  const rows = await db.select().from(logs).where(eq(logs.linkId, linkId)).orderBy(desc(logs.fechaHora));
+  return rows.map(toLogRecord);
 }
 
 // ---------- OTP ----------
 
-export function getOtp(linkId: string): OtpRecord | undefined {
-  return db().otps.get(linkId);
+export async function getOtp(linkId: string): Promise<OtpRecord | undefined> {
+  const rows = await db.select().from(otps).where(eq(otps.linkId, linkId)).limit(1);
+  return rows[0] ? toOtpRecord(rows[0]) : undefined;
 }
 
-export function setOtp(linkId: string, record: OtpRecord): void {
-  db().otps.set(linkId, record);
+export async function setOtp(linkId: string, record: OtpRecord): Promise<void> {
+  const row = {
+    linkId,
+    codigo: record.codigo,
+    expiresAt: new Date(record.expiresAt),
+    intentosFallidos: record.intentosFallidos,
+    bloqueadoHasta: record.bloqueadoHasta ? new Date(record.bloqueadoHasta) : null,
+    lastSentAt: new Date(record.lastSentAt),
+  };
+  await db
+    .insert(otps)
+    .values(row)
+    .onConflictDoUpdate({
+      target: otps.linkId,
+      set: {
+        codigo: row.codigo,
+        expiresAt: row.expiresAt,
+        intentosFallidos: row.intentosFallidos,
+        bloqueadoHasta: row.bloqueadoHasta,
+        lastSentAt: row.lastSentAt,
+      },
+    });
 }
 
 // ---------- Stats para el dashboard (P2) ----------
 
-export function statsParaStaff(staff: StaffAccount) {
-  const links = listLinksForStaff(staff);
-  const linkIds = new Set(links.map((l) => l.id));
+export async function statsParaStaff(staffAccount: StaffAccount) {
+  const misLinks = await listLinksForStaff(staffAccount);
+  const linkIds = new Set(misLinks.map((l) => l.id));
+
   const inicioHoy = new Date();
   inicioHoy.setHours(0, 0, 0, 0);
-  const logsHoy = db().logs.filter((l) => linkIds.has(l.linkId) && l.fechaHora >= inicioHoy.getTime());
+
+  const logsHoyRows = linkIds.size
+    ? await db.select().from(logs).where(gte(logs.fechaHora, inicioHoy))
+    : [];
+  const logsHoy = logsHoyRows.map(toLogRecord).filter((l) => linkIds.has(l.linkId));
 
   const bloqueos = new Set<ResultadoAcceso>([
     "correo_no_autorizado",
@@ -391,11 +518,9 @@ export function statsParaStaff(staff: StaffAccount) {
   ]);
 
   return {
-    activos: links.filter((l) => computeEstadoEfectivo(l) === "activo").length,
-    revocados: links.filter((l) => computeEstadoEfectivo(l) === "revocado").length,
+    activos: misLinks.filter((l) => computeEstadoEfectivo(l) === "activo").length,
+    revocados: misLinks.filter((l) => computeEstadoEfectivo(l) === "revocado").length,
     accesos_hoy: logsHoy.filter((l) => l.resultado === "ok").length,
     bloqueos_hoy: logsHoy.filter((l) => bloqueos.has(l.resultado)).length,
   };
 }
-
-export type { Rol };

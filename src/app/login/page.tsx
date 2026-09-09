@@ -14,7 +14,7 @@ export default async function LoginPage() {
         <p className="mt-1 text-sm text-neutral-700">Acceso de staff y administración.</p>
         <LoginForm />
         <div className="mt-6 rounded-md bg-neutral-50 p-3 text-xs text-neutral-700">
-          <p className="font-medium text-neutral-600">Credenciales demo (v1, in-memory):</p>
+          <p className="font-medium text-neutral-600">Credenciales demo (v1):</p>
           <ul className="mt-1 space-y-0.5">
             <li>Admin: ruben@adipa.cl / admin-demo-2026</li>
             <li>Staff cursos: staff.cursos@adipa.cl / cursos-demo-2026</li>

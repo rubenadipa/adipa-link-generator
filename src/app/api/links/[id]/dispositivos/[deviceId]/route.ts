@@ -12,6 +12,6 @@ export async function DELETE(
   const acceso = await requireStaffLinkAccess(id);
   if (!acceso) return NextResponse.json({ ok: false, error: "no_autorizado" }, { status: 403 });
 
-  const revocado = revocarDevice(id, deviceId);
+  const revocado = await revocarDevice(id, deviceId);
   return NextResponse.json({ ok: revocado });
 }

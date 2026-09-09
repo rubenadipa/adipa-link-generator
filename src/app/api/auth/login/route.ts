@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "faltan_datos" }, { status: 400 });
   }
 
-  const staff = findStaffByEmail(email);
+  const staff = await findStaffByEmail(email);
   if (!staff || !staff.activo || !verifyPassword(password, staff.passwordHash)) {
     return NextResponse.json({ ok: false, error: "credenciales_invalidas" }, { status: 401 });
   }

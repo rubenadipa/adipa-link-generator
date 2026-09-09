@@ -7,6 +7,6 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   if (!admin) return NextResponse.json({ ok: false, error: "no_autorizado" }, { status: 403 });
 
   const { id } = await params;
-  revocarStaff(id);
+  await revocarStaff(id);
   return NextResponse.json({ ok: true });
 }

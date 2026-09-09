@@ -54,7 +54,7 @@ export async function getStaffSession(): Promise<StaffSession | null> {
   if (!token) return null;
   try {
     const payload = jwt.verify(token, JWT_SECRET) as StaffTokenPayload;
-    const staff = findStaffById(payload.staffId);
+    const staff = await findStaffById(payload.staffId);
     if (!staff || !staff.activo) return null;
     return { ...payload, staff };
   } catch {

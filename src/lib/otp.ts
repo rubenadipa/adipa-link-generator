@@ -14,8 +14,8 @@ export type OtpGenerarResultado =
   | { ok: true; codigo: string }
   | { ok: false; error: "cooldown"; segundosRestantes: number };
 
-export function generarOtp(linkId: string): OtpGenerarResultado {
-  const existente = getOtp(linkId);
+export async function generarOtp(linkId: string): Promise<OtpGenerarResultado> {
+  const existente = await getOtp(linkId);
   const ahora = Date.now();
   if (existente && ahora - existente.lastSentAt < RESEND_COOLDOWN_MS) {
     return {
@@ -33,7 +33,7 @@ export function generarOtp(linkId: string): OtpGenerarResultado {
     bloqueadoHasta: existente?.bloqueadoHasta && existente.bloqueadoHasta > ahora ? existente.bloqueadoHasta : null,
     lastSentAt: ahora,
   };
-  setOtp(linkId, record);
+  await setOtp(linkId, record);
   return { ok: true, codigo };
 }
 
@@ -43,9 +43,9 @@ export type OtpVerificarResultado =
   | { ok: false; error: "expirado" }
   | { ok: false; error: "invalido"; intentosRestantes: number };
 
-export function verificarOtp(linkId: string, codigoIngresado: string): OtpVerificarResultado {
+export async function verificarOtp(linkId: string, codigoIngresado: string): Promise<OtpVerificarResultado> {
   const ahora = Date.now();
-  const record = getOtp(linkId);
+  const record = await getOtp(linkId);
 
   if (record?.bloqueadoHasta && record.bloqueadoHasta > ahora) {
     return { ok: false, error: "bloqueado", segundosRestantes: Math.ceil((record.bloqueadoHasta - ahora) / 1000) };
@@ -58,14 +58,14 @@ export function verificarOtp(linkId: string, codigoIngresado: string): OtpVerifi
   if (record.codigo !== codigoIngresado.trim()) {
     const intentosFallidos = record.intentosFallidos + 1;
     if (intentosFallidos >= MAX_INTENTOS) {
-      setOtp(linkId, { ...record, intentosFallidos: 0, bloqueadoHasta: ahora + BLOQUEO_MS });
+      await setOtp(linkId, { ...record, intentosFallidos: 0, bloqueadoHasta: ahora + BLOQUEO_MS });
       return { ok: false, error: "bloqueado", segundosRestantes: Math.ceil(BLOQUEO_MS / 1000) };
     }
-    setOtp(linkId, { ...record, intentosFallidos });
+    await setOtp(linkId, { ...record, intentosFallidos });
     return { ok: false, error: "invalido", intentosRestantes: MAX_INTENTOS - intentosFallidos };
   }
 
   // Código consumido: no se puede reutilizar.
-  setOtp(linkId, { ...record, codigo: "", expiresAt: 0 });
+  await setOtp(linkId, { ...record, codigo: "", expiresAt: 0 });
   return { ok: true };
 }

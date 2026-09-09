@@ -11,7 +11,7 @@ export default async function AdminCatalogoPage() {
   if (!session) redirect("/login");
   if (session.staff.rol !== "admin") redirect("/dashboard");
 
-  const contenidos = listContenidos();
+  const contenidos = await listContenidos();
 
   return (
     <div className="min-h-screen bg-neutral-50">

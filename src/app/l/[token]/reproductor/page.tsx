@@ -8,7 +8,7 @@ import { Heartbeat } from "./Heartbeat";
 export default async function ReproductorPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
-  const link = findLinkByToken(token);
+  const link = await findLinkByToken(token);
   if (!link || computeEstadoEfectivo(link) !== "activo") {
     redirect(`/l/${token}/error?motivo=no_disponible`);
   }
@@ -21,7 +21,7 @@ export default async function ReproductorPage({ params }: { params: Promise<{ to
     redirect(`/l/${token}/dispositivo`);
   }
 
-  const contenido = findContenidoById(link.contenidoId);
+  const contenido = await findContenidoById(link.contenidoId);
 
   return (
     <main className="min-h-screen bg-neutral-950 text-white">

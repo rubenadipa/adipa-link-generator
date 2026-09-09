@@ -11,7 +11,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const titulo = typeof body?.titulo === "string" ? body.titulo.trim() : undefined;
   const descripcion = typeof body?.descripcion === "string" ? body.descripcion.trim() : undefined;
 
-  const contenido = editarContenido(id, { titulo, descripcion });
+  const contenido = await editarContenido(id, { titulo, descripcion });
   if (!contenido) return NextResponse.json({ ok: false, error: "no_encontrado" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }

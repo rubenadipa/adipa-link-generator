@@ -9,7 +9,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ to
   const sesion = await getAlumnoSession(token);
   if (!sesion || !sesion.fpOk) return NextResponse.json({ ok: false }, { status: 401 });
 
-  const link = findLinkByToken(token);
+  const link = await findLinkByToken(token);
   if (!link || computeEstadoEfectivo(link) !== "activo") {
     return NextResponse.json({ ok: false }, { status: 403 });
   }

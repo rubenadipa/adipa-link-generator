@@ -16,6 +16,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "faltan_datos" }, { status: 400 });
   }
 
-  const contenido = crearContenido({ tipo, titulo, descripcion });
+  const contenido = await crearContenido({ tipo, titulo, descripcion });
   return NextResponse.json({ ok: true, contenidoId: contenido.id });
 }

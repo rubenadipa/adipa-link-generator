@@ -16,8 +16,15 @@ export default async function DashboardPage() {
   const session = await getStaffSession();
   if (!session) redirect("/login");
 
-  const stats = statsParaStaff(session.staff);
-  const links = listLinksForStaff(session.staff);
+  const stats = await statsParaStaff(session.staff);
+  const linksRaw = await listLinksForStaff(session.staff);
+  const links = await Promise.all(
+    linksRaw.map(async (link) => ({
+      link,
+      contenido: await findContenidoById(link.contenidoId),
+      devicesCount: (await listDevicesForLink(link.id)).length,
+    }))
+  );
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -59,28 +66,25 @@ export default async function DashboardPage() {
                   </td>
                 </tr>
               )}
-              {links.map((link) => {
-                const contenido = findContenidoById(link.contenidoId);
-                return (
-                  <tr key={link.id} className="border-t border-neutral-100 hover:bg-neutral-50">
-                    <td className="px-4 py-2">
-                      <Link href={`/links/${link.id}`} className="font-medium text-neutral-900 hover:underline">
-                        {contenido?.titulo ?? "(contenido eliminado)"}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-2 text-neutral-600">{link.emailAsignado}</td>
-                    <td className="px-4 py-2">
-                      <EstadoBadge estado={computeEstadoEfectivo(link)} />
-                    </td>
-                    <td className="px-4 py-2 text-neutral-600">
-                      {listDevicesForLink(link.id).length}/{link.slotsMax}
-                    </td>
-                    <td className="px-4 py-2 text-neutral-700">
-                      {new Date(link.createdAt).toLocaleDateString("es-CL")}
-                    </td>
-                  </tr>
-                );
-              })}
+              {links.map(({ link, contenido, devicesCount }) => (
+                <tr key={link.id} className="border-t border-neutral-100 hover:bg-neutral-50">
+                  <td className="px-4 py-2">
+                    <Link href={`/links/${link.id}`} className="font-medium text-neutral-900 hover:underline">
+                      {contenido?.titulo ?? "(contenido eliminado)"}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-2 text-neutral-600">{link.emailAsignado}</td>
+                  <td className="px-4 py-2">
+                    <EstadoBadge estado={computeEstadoEfectivo(link)} />
+                  </td>
+                  <td className="px-4 py-2 text-neutral-600">
+                    {devicesCount}/{link.slotsMax}
+                  </td>
+                  <td className="px-4 py-2 text-neutral-700">
+                    {new Date(link.createdAt).toLocaleDateString("es-CL")}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

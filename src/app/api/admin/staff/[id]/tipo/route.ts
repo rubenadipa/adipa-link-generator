@@ -11,6 +11,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const tipo = body?.tipo === "cursos" || body?.tipo === "diplomados" ? body.tipo : null;
   if (!tipo) return NextResponse.json({ ok: false, error: "tipo_invalido" }, { status: 400 });
 
-  cambiarTipoStaff(id, tipo);
+  await cambiarTipoStaff(id, tipo);
   return NextResponse.json({ ok: true });
 }

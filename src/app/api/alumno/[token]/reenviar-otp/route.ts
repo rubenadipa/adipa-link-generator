@@ -7,7 +7,7 @@ import { enviarOtpDemo } from "@/lib/mailer";
 // cada reenvío invalida el código anterior (generarOtp ya lo maneja).
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const link = findLinkByToken(token);
+  const link = await findLinkByToken(token);
   if (!link) return NextResponse.json({ ok: false, error: "link_no_disponible" }, { status: 404 });
 
   const estado = computeEstadoEfectivo(link);
@@ -15,7 +15,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ to
     return NextResponse.json({ ok: false, error: "link_no_disponible" }, { status: 403 });
   }
 
-  const resultado = generarOtp(link.id);
+  const resultado = await generarOtp(link.id);
   if (!resultado.ok) {
     return NextResponse.json(
       { ok: false, error: resultado.error, segundosRestantes: resultado.segundosRestantes },

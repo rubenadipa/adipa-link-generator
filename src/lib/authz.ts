@@ -21,8 +21,8 @@ export async function requireStaffLinkAccess(
 ): Promise<{ session: StaffSession; link: LinkRecord } | null> {
   const session = await getStaffSession();
   if (!session) return null;
-  const link = findLinkById(linkId);
+  const link = await findLinkById(linkId);
   if (!link) return null;
-  if (!puedeAccederLink(session.staff, link)) return null;
+  if (!(await puedeAccederLink(session.staff, link))) return null;
   return { session, link };
 }

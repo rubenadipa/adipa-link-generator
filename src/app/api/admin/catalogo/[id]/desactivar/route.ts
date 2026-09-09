@@ -9,7 +9,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   if (!admin) return NextResponse.json({ ok: false, error: "no_autorizado" }, { status: 403 });
 
   const { id } = await params;
-  const contenido = desactivarContenido(id);
+  const contenido = await desactivarContenido(id);
   if (!contenido) return NextResponse.json({ ok: false, error: "no_encontrado" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }

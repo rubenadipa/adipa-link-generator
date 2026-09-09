@@ -12,7 +12,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const otp = typeof body?.otp === "string" ? body.otp.trim() : "";
   if (!otp) return NextResponse.json({ ok: false, error: "faltan_datos" }, { status: 400 });
 
-  const link = findLinkByToken(token);
+  const link = await findLinkByToken(token);
   if (!link) return NextResponse.json({ ok: false, error: "link_no_disponible" }, { status: 404 });
 
   const meta = {
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
   const estado = computeEstadoEfectivo(link);
   if (estado === "revocado" || estado === "expirado") {
-    agregarLog({
+    await agregarLog({
       linkId: link.id,
       emailIntentado: link.emailAsignado,
       ...meta,
@@ -32,10 +32,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     return NextResponse.json({ ok: false, error: "link_no_disponible" }, { status: 403 });
   }
 
-  const resultado = verificarOtp(link.id, otp);
+  const resultado = await verificarOtp(link.id, otp);
   if (!resultado.ok) {
     if (resultado.error !== "expirado") {
-      agregarLog({
+      await agregarLog({
         linkId: link.id,
         emailIntentado: link.emailAsignado,
         ...meta,

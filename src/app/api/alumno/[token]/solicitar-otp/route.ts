@@ -12,7 +12,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const email = typeof body?.email === "string" ? body.email.trim() : "";
   if (!email) return NextResponse.json({ ok: false, error: "faltan_datos" }, { status: 400 });
 
-  const link = findLinkByToken(token);
+  const link = await findLinkByToken(token);
   const meta = {
     ip: getIp(req),
     browser: parseBrowser(req.headers.get("user-agent")),
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
   const estado = computeEstadoEfectivo(link);
   if (estado === "revocado" || estado === "expirado") {
-    agregarLog({
+    await agregarLog({
       linkId: link.id,
       emailIntentado: email,
       ...meta,
@@ -35,11 +35,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   }
 
   if (email.toLowerCase() !== link.emailAsignado.toLowerCase()) {
-    agregarLog({ linkId: link.id, emailIntentado: email, ...meta, resultado: "correo_no_autorizado" });
+    await agregarLog({ linkId: link.id, emailIntentado: email, ...meta, resultado: "correo_no_autorizado" });
     return NextResponse.json({ ok: false, error: "correo_no_autorizado" }, { status: 403 });
   }
 
-  const resultado = generarOtp(link.id);
+  const resultado = await generarOtp(link.id);
   if (!resultado.ok) {
     return NextResponse.json(
       { ok: false, error: resultado.error, segundosRestantes: resultado.segundosRestantes },

@@ -15,10 +15,10 @@ export async function POST(req: NextRequest) {
   if (!email || !tipo || !password) {
     return NextResponse.json({ ok: false, error: "faltan_datos" }, { status: 400 });
   }
-  if (findStaffByEmail(email)) {
+  if (await findStaffByEmail(email)) {
     return NextResponse.json({ ok: false, error: "email_ya_existe" }, { status: 409 });
   }
 
-  const staff = crearStaff({ email, tipo, passwordPlano: password });
+  const staff = await crearStaff({ email, tipo, passwordPlano: password });
   return NextResponse.json({ ok: true, staffId: staff.id });
 }

@@ -11,7 +11,7 @@ export default async function AdminStaffPage() {
   if (!session) redirect("/login");
   if (session.staff.rol !== "admin") redirect("/dashboard");
 
-  const staff = listStaff();
+  const staff = await listStaff();
 
   return (
     <div className="min-h-screen bg-neutral-50">

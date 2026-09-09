@@ -142,12 +142,11 @@ Admin accede a P6 y P7 desde el Dashboard (P2), no solo desde el login.
 9. **Protección DDoS o rate limiting a nivel de infraestructura** — se implementa el bloqueo por 3 OTPs fallidos, pero la protección de red queda para el hosting/CDN de ADIPA.
 10. **DRM sobre el video** — el fingerprint protege el ACCESO al recurso, no la copia posterior mediante herramientas de captura de pantalla o grabadores. Ese es un problema aparte que requeriría integración con DRM (Widevine, PlayReady, FairPlay). Queda anotado como el primer candidato para v2 si ADIPA lo prioriza.
 11. **Precisión del geo-IP en los logs** — el país se resuelve con una librería/servicio de geo-IP estándar (best-effort), sin garantía de precisión: VPNs y proxies pueden alterar el resultado. No se implementa detección ni bloqueo de VPN en v1.
-12. **Persistencia real / base de datos** — v1 se construye con almacenamiento **in-memory** (un objeto en el proceso de Node), para priorizar velocidad de desarrollo y evitar credenciales/infra externa en la demo. Esto implica que **todos los datos (staff, links, devices, logs) se pierden al reiniciar el servidor**. Migrar a una base persistente (Postgres, Turso, etc.) es un prerrequisito antes de cualquier uso real con datos de alumnos.
 
 ## Nota técnica de implementación (v1)
 
 - **Stack**: Next.js 15 (App Router) + TypeScript + Tailwind CSS.
-- **Persistencia**: in-memory (objeto global de Node), ver punto 12 de "Fuera de alcance". No apto para producción tal cual.
+- **Persistencia**: Postgres real (Neon, vía integración nativa de Vercel Marketplace) con Drizzle ORM. Los datos (staff, links, devices, logs, catálogo, OTPs) sobreviven reinicios y son consistentes entre las instancias serverless de Vercel — ya no hay el problema de datos "in-memory" por cold start que tuvo la primera versión desplegada. El schema vive en `src/lib/db/schema.ts`; `drizzle-kit push` aplica cambios de schema contra la base real.
 - **Auth staff**: bcrypt para hash de password + JWT en cookie httpOnly.
 - **OTP**: código de 6 dígitos generado en memoria con TTL de 10 minutos. Envío en modo demo (se muestra el OTP en pantalla); el hook de envío real (Resend/SMTP) queda comentado en el código para conectar en v2.
 - **Fingerprint**: hash simple derivado de atributos del navegador (canvas + user-agent) — ver "Fuera de alcance" punto 9 sobre por qué esto no es una barrera anti-fraude fuerte, solo un identificador best-effort de dispositivo.

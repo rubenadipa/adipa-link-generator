@@ -20,7 +20,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const fingerprint = typeof body?.fingerprint === "string" ? body.fingerprint : "";
   if (!fingerprint) return NextResponse.json({ ok: false, error: "faltan_datos" }, { status: 400 });
 
-  const link = findLinkByToken(token);
+  const link = await findLinkByToken(token);
   if (!link) return NextResponse.json({ ok: false, error: "link_no_disponible" }, { status: 404 });
 
   const sesion = await getAlumnoSession(token);
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
   const estado = computeEstadoEfectivo(link);
   if (estado === "revocado" || estado === "expirado") {
-    agregarLog({
+    await agregarLog({
       linkId: link.id,
       emailIntentado: link.emailAsignado,
       ...meta,
@@ -45,18 +45,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     return NextResponse.json({ ok: false, error: "link_no_disponible" }, { status: 403 });
   }
 
-  const existente = findDeviceByFingerprint(link.id, fingerprint);
+  const existente = await findDeviceByFingerprint(link.id, fingerprint);
   if (existente) {
-    tocarDevice(existente);
-  } else if (listDevicesForLink(link.id).length < link.slotsMax) {
-    registrarDevice(link.id, fingerprint);
-    marcarPrimerAccesoSiCorresponde(link.id);
+    await tocarDevice(existente);
+  } else if ((await listDevicesForLink(link.id)).length < link.slotsMax) {
+    await registrarDevice(link.id, fingerprint);
+    await marcarPrimerAccesoSiCorresponde(link.id);
   } else {
-    agregarLog({ linkId: link.id, emailIntentado: link.emailAsignado, ...meta, resultado: "limite_devices" });
+    await agregarLog({ linkId: link.id, emailIntentado: link.emailAsignado, ...meta, resultado: "limite_devices" });
     return NextResponse.json({ ok: false, error: "limite_devices" }, { status: 403 });
   }
 
-  agregarLog({ linkId: link.id, emailIntentado: link.emailAsignado, ...meta, resultado: "ok" });
+  await agregarLog({ linkId: link.id, emailIntentado: link.emailAsignado, ...meta, resultado: "ok" });
 
   const nuevoToken = signAlumnoToken({ linkId: link.id, tokenPublico: token, fpOk: true });
   await setAlumnoCookie(token, nuevoToken);

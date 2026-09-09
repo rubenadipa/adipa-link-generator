@@ -11,7 +11,7 @@ export default async function NewLinkPage() {
   if (!session) redirect("/login");
 
   const tipo = session.staff.rol === "admin" ? null : session.staff.tipo === "cursos" ? "curso" : "diplomado";
-  const contenidos = listContenidos({ soloActivos: true, tipo });
+  const contenidos = await listContenidos({ soloActivos: true, tipo });
 
   return (
     <div className="min-h-screen bg-neutral-50">

@@ -12,6 +12,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const dias = typeof body?.dias === "number" && body.dias > 0 ? Math.floor(body.dias) : null;
   if (!dias) return NextResponse.json({ ok: false, error: "dias_invalido" }, { status: 400 });
 
-  const link = extenderValidez(id, dias);
+  const link = await extenderValidez(id, dias);
   return NextResponse.json({ ok: true, validezDias: link?.validezDias });
 }

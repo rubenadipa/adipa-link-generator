@@ -17,9 +17,9 @@ export default async function LinkDetailPage({ params }: { params: Promise<{ id:
   if (!acceso) notFound();
 
   const { link } = acceso;
-  const contenido = findContenidoById(link.contenidoId);
-  const devices = listDevicesForLink(link.id);
-  const logs = listLogsForLink(link.id);
+  const contenido = await findContenidoById(link.contenidoId);
+  const devices = await listDevicesForLink(link.id);
+  const logs = await listLogsForLink(link.id);
   const estado = computeEstadoEfectivo(link);
 
   return (

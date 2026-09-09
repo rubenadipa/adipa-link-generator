@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "faltan_datos" }, { status: 400 });
   }
 
-  const contenido = findContenidoById(contenidoId);
+  const contenido = await findContenidoById(contenidoId);
   if (!contenido || !contenido.activo) {
     return NextResponse.json({ ok: false, error: "contenido_invalido" }, { status: 400 });
   }
@@ -30,11 +30,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "fuera_de_tipo" }, { status: 403 });
   }
 
-  if (!confirmar && existeLinkActivoDuplicado(emailAlumno, contenidoId)) {
+  if (!confirmar && (await existeLinkActivoDuplicado(emailAlumno, contenidoId))) {
     return NextResponse.json({ ok: false, warning: "correo_ya_tiene_link_activo" });
   }
 
-  const link = crearLink({ contenidoId, emailAlumno, validezDias, createdBy: session.staffId });
+  const link = await crearLink({ contenidoId, emailAlumno, validezDias, createdBy: session.staffId });
   const origin = req.nextUrl.origin;
 
   return NextResponse.json({
