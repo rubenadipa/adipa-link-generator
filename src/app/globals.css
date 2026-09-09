@@ -12,15 +12,22 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/*
+ * Esta app es 100% tema claro (tarjetas bg-white / bg-neutral-50 en todas
+ * partes). NO seguir prefers-color-scheme: dark aquí — si el color de fondo
+ * cambia a oscuro pero las tarjetas siguen siendo claras, cualquier texto sin
+ * color explícito (inputs, <p> sueltos) hereda un color casi blanco y queda
+ * invisible sobre fondo blanco. Forzamos claro siempre.
+ */
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+input,
+select,
+textarea {
+  color: var(--foreground);
 }
