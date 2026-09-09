@@ -54,7 +54,7 @@ function seed(): Db {
   const staff: StaffAccount[] = [
     {
       id: SEED_STAFF_ADMIN_ID,
-      email: "rodrigo@adipa.cl",
+      email: "ruben@adipa.cl",
       passwordHash: bcrypt.hashSync("admin-demo-2026", 10),
       rol: "admin",
       tipo: null,
