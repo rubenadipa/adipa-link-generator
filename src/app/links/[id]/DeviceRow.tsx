@@ -22,7 +22,7 @@ export function DeviceRow({ linkId, device }: { linkId: string; device: DeviceRe
     <li className="flex items-center justify-between rounded-md border border-neutral-100 p-2 text-xs">
       <div>
         <p className="font-mono text-neutral-700">{device.fingerprint.slice(0, 12)}…</p>
-        <p className="text-neutral-400">último acceso: {new Date(device.ultimoAcceso).toLocaleString("es-CL")}</p>
+        <p className="text-neutral-600">último acceso: {new Date(device.ultimoAcceso).toLocaleString("es-CL")}</p>
       </div>
       <button onClick={revocar} disabled={loading} className="text-red-600 hover:underline disabled:opacity-50">
         {loading ? "..." : "Revocar"}

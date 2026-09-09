@@ -77,7 +77,7 @@ export function LinkActions({
       </div>
 
       <div className="rounded-md border border-neutral-200 p-2">
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-neutral-700">
           Validez: {validezDias ? `${validezDias} días desde 1er acceso` : "permanente"}
         </p>
         <div className="mt-2 flex items-center gap-2">

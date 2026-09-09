@@ -8,12 +8,12 @@ export function Topbar({ session }: { session: StaffSession }) {
 
   return (
     <header className="border-b border-neutral-200 bg-white">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-6">
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <Link href="/dashboard" className="font-semibold text-neutral-900">
             ADIPA · Enlaces
           </Link>
-          <nav className="flex items-center gap-4 text-sm text-neutral-600">
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-neutral-700">
             <Link href="/dashboard" className="hover:text-neutral-900">
               Dashboard
             </Link>
@@ -33,8 +33,9 @@ export function Topbar({ session }: { session: StaffSession }) {
           </nav>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-neutral-500">
-            {staff.email} · <span className="font-medium text-neutral-700">{rolLabel}</span>
+          <span className="text-neutral-700">
+            <span className="hidden sm:inline">{staff.email} · </span>
+            <span className="font-medium text-neutral-800">{rolLabel}</span>
           </span>
           <LogoutButton />
         </div>

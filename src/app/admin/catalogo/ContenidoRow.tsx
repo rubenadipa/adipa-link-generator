@@ -75,7 +75,7 @@ export function ContenidoRow({ contenido }: { contenido: Contenido }) {
                 <span className="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-800">Desactivado</span>
               )}
             </p>
-            <p className="text-neutral-500">{contenido.descripcion}</p>
+            <p className="text-neutral-700">{contenido.descripcion}</p>
           </div>
           <div className="flex gap-3 text-xs">
             <button onClick={() => setEditando(true)} className="text-neutral-600 hover:underline">

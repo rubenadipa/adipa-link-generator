@@ -110,7 +110,7 @@ export function OtpForm({ token }: { token: string }) {
         type="button"
         onClick={handleReenviar}
         disabled={loading || cooldown > 0}
-        className="w-full text-xs text-neutral-500 hover:underline disabled:opacity-50"
+        className="w-full text-xs text-neutral-700 hover:underline disabled:opacity-50"
       >
         {cooldown > 0 ? `Reenviar código (${cooldown}s)` : "Reenviar código"}
       </button>

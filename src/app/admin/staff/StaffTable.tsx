@@ -33,8 +33,9 @@ export function StaffTable({ staff, currentStaffId }: { staff: StaffAccount[]; c
   }
 
   return (
-    <table className="w-full text-left text-sm">
-      <thead className="bg-neutral-50 text-neutral-500">
+    <div className="overflow-x-auto">
+    <table className="w-full min-w-[560px] text-left text-sm">
+      <thead className="bg-neutral-50 text-neutral-700">
         <tr>
           <th className="px-4 py-2 font-medium">Correo</th>
           <th className="px-4 py-2 font-medium">Rol</th>
@@ -60,7 +61,7 @@ export function StaffTable({ staff, currentStaffId }: { staff: StaffAccount[]; c
                   <option value="diplomados">Diplomados</option>
                 </select>
               ) : (
-                <span className="text-neutral-400">—</span>
+                <span className="text-neutral-600">—</span>
               )}
             </td>
             <td className="px-4 py-2">
@@ -72,7 +73,7 @@ export function StaffTable({ staff, currentStaffId }: { staff: StaffAccount[]; c
             </td>
             <td className="px-4 py-2">
               {s.rol === "admin" || s.id === currentStaffId ? (
-                <span className="text-neutral-400">—</span>
+                <span className="text-neutral-600">—</span>
               ) : (
                 <button
                   onClick={() => revocar(s.id)}
@@ -87,5 +88,6 @@ export function StaffTable({ staff, currentStaffId }: { staff: StaffAccount[]; c
         ))}
       </tbody>
     </table>
+    </div>
   );
 }

@@ -40,9 +40,9 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-lg border border-neutral-200 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-neutral-50 text-neutral-500">
+        <div className="mt-4 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead className="bg-neutral-50 text-neutral-700">
               <tr>
                 <th className="px-4 py-2 font-medium">Contenido</th>
                 <th className="px-4 py-2 font-medium">Correo asignado</th>
@@ -54,7 +54,7 @@ export default async function DashboardPage() {
             <tbody>
               {links.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-neutral-400">
+                  <td colSpan={5} className="px-4 py-6 text-center text-neutral-600">
                     Todavía no hay links creados.
                   </td>
                 </tr>
@@ -75,7 +75,7 @@ export default async function DashboardPage() {
                     <td className="px-4 py-2 text-neutral-600">
                       {listDevicesForLink(link.id).length}/{link.slotsMax}
                     </td>
-                    <td className="px-4 py-2 text-neutral-500">
+                    <td className="px-4 py-2 text-neutral-700">
                       {new Date(link.createdAt).toLocaleDateString("es-CL")}
                     </td>
                   </tr>
@@ -92,7 +92,7 @@ export default async function DashboardPage() {
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-lg border border-neutral-200 bg-white p-4">
-      <p className="text-sm text-neutral-500">{label}</p>
+      <p className="text-sm text-neutral-700">{label}</p>
       <p className="mt-1 text-2xl font-semibold text-neutral-900">{value}</p>
     </div>
   );

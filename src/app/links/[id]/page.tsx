@@ -29,7 +29,7 @@ export default async function LinkDetailPage({ params }: { params: Promise<{ id:
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-semibold text-neutral-900">{contenido?.titulo ?? "(contenido eliminado)"}</h1>
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-neutral-700">
               Correo asignado: <span className="font-medium text-neutral-700">{link.emailAsignado}</span>
             </p>
           </div>
@@ -53,7 +53,7 @@ export default async function LinkDetailPage({ params }: { params: Promise<{ id:
                 Dispositivos ({devices.length}/{link.slotsMax})
               </h2>
               <ul className="mt-2 space-y-2">
-                {devices.length === 0 && <li className="text-sm text-neutral-400">Sin dispositivos vinculados.</li>}
+                {devices.length === 0 && <li className="text-sm text-neutral-600">Sin dispositivos vinculados.</li>}
                 {devices.map((d) => (
                   <DeviceRow key={d.id} linkId={link.id} device={d} />
                 ))}
@@ -68,7 +68,7 @@ export default async function LinkDetailPage({ params }: { params: Promise<{ id:
               </h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-neutral-50 text-neutral-500">
+                  <thead className="bg-neutral-50 text-neutral-700">
                     <tr>
                       <th className="px-4 py-2 font-medium">Fecha/hora</th>
                       <th className="px-4 py-2 font-medium">Email intentado</th>
@@ -81,7 +81,7 @@ export default async function LinkDetailPage({ params }: { params: Promise<{ id:
                   <tbody>
                     {logs.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="px-4 py-6 text-center text-neutral-400">
+                        <td colSpan={6} className="px-4 py-6 text-center text-neutral-600">
                           Sin accesos registrados todavía.
                         </td>
                       </tr>

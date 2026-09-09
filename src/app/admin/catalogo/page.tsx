@@ -18,7 +18,7 @@ export default async function AdminCatalogoPage() {
       <Topbar session={session} />
       <main className="mx-auto max-w-3xl px-4 py-8">
         <h1 className="text-lg font-semibold text-neutral-900">Gestionar catálogo</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <p className="mt-1 text-sm text-neutral-700">
           Solo el Admin gestiona el catálogo. El staff únicamente lo lee (filtrado por su tipo) al crear un link.
         </p>
 

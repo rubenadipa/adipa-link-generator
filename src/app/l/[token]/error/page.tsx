@@ -45,7 +45,7 @@ export default async function AlumnoErrorPage({
           ✕
         </div>
         <h1 className="text-lg font-semibold text-neutral-900">{info.titulo}</h1>
-        <p className="mt-2 text-sm text-neutral-500">{info.mensaje}</p>
+        <p className="mt-2 text-sm text-neutral-700">{info.mensaje}</p>
         {segundosRestantes && <Countdown segundosIniciales={segundosRestantes} />}
         {info.cta && (
           <a

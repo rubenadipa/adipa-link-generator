@@ -18,7 +18,7 @@ export default async function NewLinkPage() {
       <Topbar session={session} />
       <main className="mx-auto max-w-lg px-4 py-8">
         <h1 className="text-lg font-semibold text-neutral-900">Crear link protegido</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <p className="mt-1 text-sm text-neutral-700">
           El link acepta hasta 2 dispositivos por defecto. El correo asignado no se puede editar después.
         </p>
         <div className="mt-6 rounded-lg border border-neutral-200 bg-white p-6">

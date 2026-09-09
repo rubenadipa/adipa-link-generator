@@ -159,7 +159,7 @@ export function NewLinkForm({ contenidos }: { contenidos: Contenido[] }) {
             />
           </div>
         )}
-        {!conValidez && <p className="mt-1 text-xs text-neutral-500">Por defecto el link es permanente.</p>}
+        {!conValidez && <p className="mt-1 text-xs text-neutral-700">Por defecto el link es permanente.</p>}
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
